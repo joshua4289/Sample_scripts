@@ -1,0 +1,76 @@
+#!/bin/bash
+
+# set up for our loop
+export FIRST=$1
+export LAST=$2
+FILEROOT="mic"
+FILEROOT_OP="mic"
+
+cwd=`pwd`
+
+mkdir -p imagic_avg
+mkdir -p mrc_avg
+# do it to it
+i=$FIRST
+fn=0
+fn1=$(( fno-1 ))
+
+while (( $i <= $LAST ))
+do
+fn=0
+while (( $fn <= $fn1 ))
+do
+# set the current image name
+num=`echo ${i} | awk '{printf("%06d\n", $1)}'`
+CURRFILE="$FILEROOT""$num""_n$fn"
+CURRFILE_OP=$FILEROOT_OP$num"_n$fn"
+
+/nfs/programs/x86_64-linux/em2em/20130422/em2em.sh -t << EOSc
+2D
+MRC
+UNKNOWN
+IMAGIC
+$cwd/$CURRFILE.mrc
+$cwd/imagic_avg/$CURRFILE_OP.img
+1.4
+NO
+NAME_OF_IMPORT_FILES
+NO
+LINUX
+EOSc
+
+# convert the imagic image to MRC(just mrc) format
+#Input files in imagic_avg folder and output files in mrc_avg folder
+
+/nfs/programs/x86_64-linux/em2em/20130422/em2em.sh -t << EOSc
+2D
+IMAGIC
+MRC
+SINGLE_IMAGE_FILE
+$cwd/imagic_avg/$CURRFILE_OP.img
+ONE_SINGLE_IMAGE
+$cwd/mrc_avg/${CURRFILE_OP}.mrc
+NO
+NAME_OF_IMPORT_FILES
+EOSc
+
+let fn=fn+1
+if (( $fn == $fno ))
+then
+let i=i+1
+fi
+done
+
+done
+#Cleanup of intermediate Imagic .img and .hed files
+DIR="imagic_avg/"
+if [ -d "$DIR" ]
+then
+echo "Found the imagic_avg directory Cleaning up "
+sleep 2
+rm -rf imagic_avg/
+fi
+
+
+
+
